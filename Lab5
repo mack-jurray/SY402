@@ -1,0 +1,82 @@
+import os
+import sys
+import hashlib
+import time
+
+directory = "/home/sy402"
+
+skip = ['dev', 'proc', 'run', 'sys', 'tmp', 'var/lib', 'var/run', 'boot', 'mnt', 'var', 'opt', 'etc']
+newFileList = []
+fileList = []
+#oldcount = 0
+newCount = 0
+
+def main():
+    if os.path.getsize("/home/sy402/Documents/hashes.txt") > 0:
+        for root1, dirs1, files1 in os.walk(directory):
+            for eachFile in files1:
+                try:
+                    thePath = (os.path.join(root1, eachFile))
+                    apathHash = hashlib.sha256()
+                    if ".cache" in str(thePath) or ".vscode" in str(thePath) or ".mozilla" in str(thePath):
+                        break
+                    else:
+                        with open (thePath, "rb") as filer:   #got this next part from stack overflow
+                            for byte_block in iter(lambda: filer.read(4096),b""):
+                                apathHash.update(byte_block)
+                                newCount += 1
+                        newFileList.append(str(apathHash.hexdigest()))
+                except:
+                    continue
+        with open("hashes.txt", 'r') as hFile:
+            for line in hFile:
+                if str(line) not in newFileList:
+                    print("A File has been altered")
+                    return
+        
+            
+
+    else:
+        with open("hashes.txt", 'a') as hFile2:
+            for root, dirs, files in os.walk(directory):
+                for filename in files:
+                    try:
+                        ##print(os.path.join(root, filename))   #got this from geeksforgeeks.org
+                        fullPath = (os.path.join(root, filename))
+                        pathHash = hashlib.sha256()
+                        if ".cache" in str(fullPath) or ".vscode" in str(fullPath) or ".mozilla" in str(fullPath):
+                            break
+                        else:
+                            with open (fullPath, "rb") as file:   #got this next part from stack overflow
+                                for byte_block in iter(lambda: file.read(4096),b""):
+                                    pathHash.update(byte_block)
+                                #print(pathHash.hexdigest())
+                            hFile2.write(pathHash.hexdigest() + "\n")
+                            fileList.append(fullPath)
+                            ##print(fullPath)
+                    except:
+                        continue
+                    ##fileList.append((os.path.join(root, filename)))
+        #hFile2.write(str(fileList))
+        ###else:
+            ###hFile.readlines()
+    
+    for filePath in fileList:
+        try:
+            ti_m = os.path.getmtime(filePath)
+            m_ti = time.ctime(ti_m)
+            ##print(m_ti)
+        except:
+            continue
+    
+    for eachIgnore in skip:
+        if eachIgnore in fileList:
+            fileList.remove(eachIgnore)
+
+#print(fileList)
+        
+
+    
+
+if __name__ == "__main__":
+    main()
